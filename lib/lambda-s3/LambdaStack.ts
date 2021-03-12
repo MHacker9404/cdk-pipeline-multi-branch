@@ -1,4 +1,4 @@
-import { Effect, ManagedPolicy, PolicyStatement } from '@aws-cdk/aws-iam';
+import { ManagedPolicy } from '@aws-cdk/aws-iam';
 import { Runtime } from '@aws-cdk/aws-lambda';
 import { NodejsFunction } from '@aws-cdk/aws-lambda-nodejs';
 import { App, Duration, Stack, StackProps } from '@aws-cdk/core';
