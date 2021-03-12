@@ -3,7 +3,7 @@ import { SecretsManager, STS } from 'aws-sdk';
 import * as path from 'path';
 import * as fs from 'fs-extra';
 import { exec } from 'child_process';
-import './S3BucketStack';
+import '../S3BucketStack';
 
 const default_region = process.env.AWS_REGION || 'us-east-1';
 let aws_access_key_id: string, aws_secret_access_key: string;
@@ -126,7 +126,7 @@ npx cdk deploy -v --profile default --region ${default_region} --requireApproval
     // npx cdk diff -v --context account=790743634046 --region ${default_region} --app "node handler.js" --context output='/tmp/cdk.out' --requireApproval=never
 
     return handleProcess(exec(cmd))
-        .then(exit_code => {
+        .then((exit_code) => {
             console.log(`exit_code = ${exit_code}`);
             let response = {
                 statusCode: 0 == exit_code ? 200 : 500,
@@ -134,7 +134,7 @@ npx cdk deploy -v --profile default --region ${default_region} --requireApproval
             };
             callback(null, response);
         })
-        .catch(error => {
+        .catch((error) => {
             console.error(error);
             let response = {
                 statusCode: 500,
