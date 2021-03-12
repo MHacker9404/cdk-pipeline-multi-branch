@@ -1,14 +1,5 @@
-# Welcome to your CDK TypeScript project!
+# CDK CodePipeline Multi-Branch strategy
 
-This is a blank project for TypeScript development with CDK.
+The purpose is to re-architect the [codepipeline muulti-branch strategy](https://github.com/aws-samples/aws-codepipeline-multi-branch-strategy) example. The issue it raised with me is the dependecy on CloudFormation executed from a Lambda - and I don't like CloudFormation.
 
-The `cdk.json` file tells the CDK Toolkit how to execute your app.
-
-## Useful commands
-
- * `npm run build`   compile typescript to js
- * `npm run watch`   watch for changes and compile
- * `npm run test`    perform the jest unit tests
- * `cdk deploy`      deploy this stack to your default AWS account/region
- * `cdk diff`        compare deployed stack with current state
- * `cdk synth`       emits the synthesized CloudFormation template
+I used [cdk-in-lambda](https://github.com/imyoungyang/cdk-in-lambda) as a starting point.
