@@ -3,7 +3,7 @@ import { SecretsManager, STS } from 'aws-sdk';
 import * as path from 'path';
 import * as fs from 'fs-extra';
 import { exec } from 'child_process';
-import '../S3BucketStack';
+import './CodePipelineStack';
 
 const default_region = process.env.AWS_REGION || 'us-east-1';
 let aws_access_key_id: string, aws_secret_access_key: string;
@@ -39,23 +39,17 @@ aws_secret_access_key=${aws_secret_access_key}
       `;
         fs.outputFileSync(path.resolve('/tmp', '.aws', 'credentials'), data);
     }
-
-    // process.env['AWS_ACCESS_KEY_ID'] = aws_access_key_id;
-    // process.env['AWS_SECRET_ACCESS_KEY'] = aws_secret_access_key;
 };
 
-async function configCDK() {
+async function configCDK(detailAccount: any, detailRegion: any) {
+    console.log('configCDK', { detailAccount, detailRegion });
+
     if (!fs.pathExistsSync(path.resolve('/tmp', '.cdk.json'))) {
         const sts = new STS();
-        let account: string;
-
-        sts.getCallerIdentity({}, (error, data) => {
-            if (error) {
-                console.log('Error', error);
-            } else {
-                account = data.Account!;
-            }
-        });
+        const response = await sts.getCallerIdentity().promise();
+        console.log('response', response);
+        const account = response['Account'];
+        console.log('response', response, account);
 
         const data = `
 {        
@@ -110,23 +104,39 @@ function handleProcess(process: any): Promise<any> {
 }
 
 export const handler = async (event: any = {}, context: any, callback: any): Promise<any> => {
+    const detail = {
+        account: event.account,
+        region: event.region,
+        repo: event.detail.repositoryName,
+        branch: event.detail.referenceName.includes('/')
+            ? event.detail.referenceName.split('/')[1]
+            : event.detail.referenceName,
+        event: event.detail.event,
+        action: event.detail.event === 'referenceDeleted' ? 'destroy' : 'deploy',
+        approval: event.detail.event === 'referenceDeleted' ? '--force' : '--require-approval=never',
+    };
+    console.log('detail', detail);
+    if (detail.branch === 'master') return;
+
     await configEnv();
-    await configCDK();
+    await configCDK(detail.account, detail.region);
 
     const cmd = `
-export HOME='/tmp'
-printenv
-pwd
-ls -al
-cat /tmp/.cdk.json
-cat /tmp/.aws/credentials
-cat /tmp/.aws/config
-npx cdk deploy -v --profile default --region ${default_region} --requireApproval=never
-  `;
-    // npx cdk diff -v --context account=790743634046 --region ${default_region} --app "node handler.js" --context output='/tmp/cdk.out' --requireApproval=never
+    export HOME='/tmp'
+    pwd
+    ls -al
+    ls -al /tmp
+    cat /tmp/.cdk.json
+    npx cdk ${detail.action} -v --profile default \
+                                --region ${detail.region} \
+                                --context repo=${detail.repo} \
+                                --context branch=${detail.branch} \
+                                ${detail.approval}
+      `;
+    console.log('cmd', cmd);
 
     return handleProcess(exec(cmd))
-        .then((exit_code) => {
+        .then(exit_code => {
             console.log(`exit_code = ${exit_code}`);
             let response = {
                 statusCode: 0 == exit_code ? 200 : 500,
@@ -134,7 +144,7 @@ npx cdk deploy -v --profile default --region ${default_region} --requireApproval
             };
             callback(null, response);
         })
-        .catch((error) => {
+        .catch(error => {
             console.error(error);
             let response = {
                 statusCode: 500,
