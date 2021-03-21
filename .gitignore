@@ -3,12 +3,15 @@
 *.d.ts
 node_modules
 
+!release.config.js
+!.cz-config.js
+
 # CDK asset staging directory
 .cdk.staging
 cdk.out
 
 dist/
-
+.vscode/
 
 .yarn/*
 .yarn/cache

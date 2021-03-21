@@ -108,15 +108,15 @@ export const handler = async (event: any = {}, context: any, callback: any): Pro
         account: event.account,
         region: event.region,
         repo: event.detail.repositoryName,
-        branch: event.detail.referenceName.includes('/')
-            ? event.detail.referenceName.split('/')[1]
-            : event.detail.referenceName,
+        branch: event.detail.referenceName,
         event: event.detail.event,
         action: event.detail.event === 'referenceDeleted' ? 'destroy' : 'deploy',
         approval: event.detail.event === 'referenceDeleted' ? '--force' : '--require-approval=never',
     };
     console.log('detail', detail);
-    if (detail.branch === 'master') return;
+
+    /** just create pipelines for trunk and dev - they will not be deleted */
+    if (detail.action === 'destroy' && (detail.branch === 'trunk' || detail.branch === 'dev')) return;
 
     await configEnv();
     await configCDK(detail.account, detail.region);
